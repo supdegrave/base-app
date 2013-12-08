@@ -79,4 +79,10 @@ describe User do
       FactoryGirl.create(:user).encrypted_password.should_not be_blank
     end
   end
+
+  describe "admin users" do
+    it "creates a valid admin" do
+      FactoryGirl.create(:admin).has_role? :admin
+    end
+  end
 end
