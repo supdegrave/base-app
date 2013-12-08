@@ -1,103 +1,82 @@
 require 'spec_helper'
 
 describe User do
-
-  before(:each) do
-    @attr = {
-      :name => "Example User",
-      :email => "user@example.com",
-      :password => "changeme",
-      :password_confirmation => "changeme"
-    }
+  it "creates a valid user" do
+    FactoryGirl.create(:user).should be_valid
   end
-
-  it "should create a new instance given a valid attribute" do
-    User.create!(@attr)
-  end
-
-  it "should require an email address" do
-    no_email_user = User.new(@attr.merge(:email => ""))
-    no_email_user.should_not be_valid
-  end
-
-  it "should accept valid email addresses" do
-    addresses = %w[user@foo.com THE_USER@foo.bar.org first.last@foo.jp]
-    addresses.each do |address|
-      valid_email_user = User.new(@attr.merge(:email => address))
-      valid_email_user.should be_valid
+  
+  def self.it_fails_on_blank(*attr_list)
+    attr_list.each do |attr|
+      it "fails on blank #{attr}" do
+        FactoryGirl.build(:user, attr => "").should_not be_valid 
+      end
     end
   end
-
-  it "should reject invalid email addresses" do
-    addresses = %w[user@foo,com user_at_foo.org example.user@foo.]
-    addresses.each do |address|
-      invalid_email_user = User.new(@attr.merge(:email => address))
-      invalid_email_user.should_not be_valid
+  
+  def self.it_responds_to(*attr_list)
+    attr_list.each do |attr|
+      it "responds to #{attr}" do
+        User.new.respond_to? :attr
+      end
     end
   end
+  
+  it_responds_to  :email, 
+                  :first_name, 
+                  :last_name, 
+                  :password, 
+                  :password_confirmation, 
+                  :encrypted_password
+  
+  
+  describe "email tests" do
+    it_fails_on_blank   :email, 
+                        :first_name, 
+                        :last_name
 
-  it "should reject duplicate email addresses" do
-    User.create!(@attr)
-    user_with_duplicate_email = User.new(@attr)
-    user_with_duplicate_email.should_not be_valid
+    it "raises error on invalid email" do
+      expect { FactoryGirl.create(:user, :email => "bademail-example-com") }.to raise_error ActiveRecord::RecordInvalid
+    end
+
+    it "fails on duplicate email" do
+      user = FactoryGirl.create(:user)
+      FactoryGirl.build(:user, :email => user.email).should_not be_valid 
+    end
+
+    it "accepts valid email addresses" do
+      %w[user@foo.com THE_USER@foo.bar.org first.last@foo.jp].each do |email|
+        FactoryGirl.create(:user, :email => email).should be_valid 
+      end
+    end
+
+    it "fails on invalid email addresses" do
+      %w[user@foo,com user_at_foo.org example.user@foo.].each do |email|
+        FactoryGirl.build(:user, :email => email).should_not be_valid       
+      end
+    end
+
+    it "rejects emails identical except for case" do
+      user = FactoryGirl.create(:user)
+      FactoryGirl.build(:user, :email => user.email.upcase).should_not be_valid 
+    end
   end
-
-  it "should reject email addresses identical up to case" do
-    upcased_email = @attr[:email].upcase
-    User.create!(@attr.merge(:email => upcased_email))
-    user_with_duplicate_email = User.new(@attr)
-    user_with_duplicate_email.should_not be_valid
-  end
-
+    
   describe "passwords" do
-
-    before(:each) do
-      @user = User.new(@attr)
+    it_fails_on_blank   :password, 
+                        :password_confirmation
+    
+    it "fails on unmatched passwords" do
+      FactoryGirl.build(:user, :password => 'dsfgklhfgjh', :password_confirmation => 'hgjwdhfbsadjkhfg').should_not be_valid
     end
-
-    it "should have a password attribute" do
-      @user.should respond_to(:password)
-    end
-
-    it "should have a password confirmation attribute" do
-      @user.should respond_to(:password_confirmation)
-    end
-  end
-
-  describe "password validations" do
-
-    it "should require a password" do
-      User.new(@attr.merge(:password => "", :password_confirmation => "")).
-        should_not be_valid
-    end
-
-    it "should require a matching password confirmation" do
-      User.new(@attr.merge(:password_confirmation => "invalid")).
-        should_not be_valid
-    end
-
-    it "should reject short passwords" do
-      short = "a" * 5
-      hash = @attr.merge(:password => short, :password_confirmation => short)
-      User.new(hash).should_not be_valid
-    end
-
-  end
-
-  describe "password encryption" do
-
-    before(:each) do
-      @user = User.create!(@attr)
-    end
-
-    it "should have an encrypted password attribute" do
-      @user.should respond_to(:encrypted_password)
+    
+    it "fails on short passwords" do
+      %w[a ab abc abcd abcde abcdef abcdefg].each do |password|
+        FactoryGirl.build(:user, :password => password, :password_confirmation => password).should_not be_valid 
+      end
     end
 
     it "should set the encrypted password attribute" do
-      @user.encrypted_password.should_not be_blank
+      FactoryGirl.create(:user).encrypted_password.should_not be_blank
     end
-
   end
-
 end
