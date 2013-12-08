@@ -1,19 +1,14 @@
 !!!
 %html
   %head
-    %meta{:name => "viewport", :content => "width=device-width, initial-scale=1.0"}
-    %title= content_for?(:title) ? yield(:title) : 'Base App'
-    %meta{:name => "description", :content => "#{content_for?(:description) ? yield(:description) : 'Base App'}"}
-    = stylesheet_link_tag "application"
-    -# Foundation 5 won't work with Rails Turbolinks
-    -# Modernizr is required for Zurb Foundation
-    = javascript_include_tag "vendor/modernizr"
+    %title BaseApp
+    = stylesheet_link_tag    "application", media: "all", "data-turbolinks-track" => true
+    = javascript_include_tag "application", "data-turbolinks-track" => true
     = csrf_meta_tags
   %body
     %header
       = render 'layouts/navigation'
-    %main{:role => "main"}
-      = render 'layouts/messages'
-      = yield
-    -# Foundation 5 won't work when application.js is included in HEAD
-    = javascript_include_tag "application"
+    %main(role="main")
+      = render 'layouts/messages' 
+      = yield 
+    = javascript_include_tag "application" 
